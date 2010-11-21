@@ -1,0 +1,7 @@
+; $Id$
+name = Sequenced newsletter
+description = Makes possible to send scheduled sequenced email newsletters.
+dependencies[] = simplenews
+dependencies[] = date_api
+package = Mail
+core = 6.x

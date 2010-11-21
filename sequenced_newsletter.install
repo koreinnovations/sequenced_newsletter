@@ -1,0 +1,53 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Install and uninstall functions for the Sequenced newsletter module.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function sequenced_newsletter_install() {
+  drupal_install_schema('sequenced_newsletter');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function sequenced_newsletter_schema() {
+  $schema['sequenced_newsletter'] = array(
+    'fields' => array(
+      'nid' => array(
+        'type' => 'int',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => 0),
+      'sid' => array(
+        'type' => 'int',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => 0),
+      'date_spooled' => array(
+        'type' => 'int',
+        'length' => 11,
+        'not null' => TRUE,
+        'default' => 0)
+    )
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function sequenced_newsletter_uninstall() {
+  drupal_uninstall_schema('sequenced_newsletter');
+  variable_del('sequenced_newsletter_start_time');
+  variable_del('sequenced_newsletter_enable');
+  variable_del('sequenced_newsletter_master');
+  variable_del('sequenced_newsletter_period');
+  variable_del('sequenced_newsletter_last_run');
+}
