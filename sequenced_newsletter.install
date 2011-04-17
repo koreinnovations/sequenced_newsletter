@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /**
  * @file
@@ -10,33 +11,114 @@
  */
 function sequenced_newsletter_install() {
   drupal_install_schema('sequenced_newsletter');
+  drupal_install_schema('sequenced_newsletter_conf');
 }
 
 /**
  * Implementation of hook_schema().
  */
 function sequenced_newsletter_schema() {
+  // Database for storing newsletters
   $schema['sequenced_newsletter'] = array(
     'fields' => array(
       'nid' => array(
         'type' => 'int',
-        'length' => 10,
+        'size' => 'big',
         'not null' => TRUE,
+        'unsigned' => TRUE,
         'default' => 0),
       'sid' => array(
         'type' => 'int',
-        'length' => 10,
+        'size' => 'big',
         'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0),
+      'sqnid' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
         'default' => 0),
       'date_spooled' => array(
         'type' => 'int',
         'length' => 11,
         'not null' => TRUE,
+        'unsigned' => TRUE,
         'default' => 0)
     )
   );
+  
+  // Confiuration database.
+  $schema['sequenced_newsletter_conf'] = _sequenced_newsletter_conf_schema();
 
   return $schema;
+}
+
+
+/**
+ * Returns definition for configuration schema.
+ */
+function _sequenced_newsletter_conf_schema() {
+  return array(
+    'description' => 'Table with configuration for sequenced newsletter.',
+  	'fields' => array(
+      'sqnid' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Unique ID of sequenced newsletter.',
+      ),
+      'tid' => array(
+        'type' => 'int',
+        'length' => 10,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Term ID of simplenews newsletter to be used.',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Human name for this sequenced newsletter.',
+      ),
+      'start_date' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => 'Date when sending was started.',
+      ),
+      'last_send' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+        'default' => 0,
+        'description' => 'Timestamp of last send.',
+      ),
+      'send_interval' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Sending interval: 0 - daily, 1 - weekly, 2 - monthly, 3 - every 5 minutes, 4 - every minute.',
+      ),
+      'sort' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Tells how to determine order of issues: 0 - by nid, 1 - update timestamp.',
+      ),
+      'status' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Status of this newsletter: 0 - disabled, 1 - enabled, 2 - deleted.',
+      ),
+    ),
+    'primary key' => array('sqnid'),
+  );
 }
 
 /**
@@ -44,9 +126,57 @@ function sequenced_newsletter_schema() {
  */
 function sequenced_newsletter_uninstall() {
   drupal_uninstall_schema('sequenced_newsletter');
-  variable_del('sequenced_newsletter_start_time');
-  variable_del('sequenced_newsletter_enable');
+  drupal_uninstall_schema('sequenced_newsletter_conf');
+}
+
+/**
+ * Updates module to be able to use multiple sequences.
+ */
+function sequenced_newsletter_update_6001() {
+  // Add table sequenced_newsletter_conf
+  $ret = array();
+  db_create_table($ret, 'sequenced_newsletter_conf', _sequenced_newsletter_conf_schema());
+  
+  // Add sqnid field to sequenced_newsletter
+  $ret = array();
+  db_add_field($ret, 'sequenced_newsletter', 'sqnid', 
+    array(
+      'type' => 'int',
+      'size' => 'big',
+      'not null' => TRUE,
+      'unsigned' => TRUE,
+      'default' => 0
+    )
+  );
+  
+  // Get data about old newsletter.
+  $tid = variable_get('sequenced_newsletter_master', 0);
+  $last_send = variable_get('sequenced_newsletter_last_run', 0);
+  $name = "Imported sequenced newsletter";
+  $interval = variable_get('sequenced_newsletter_period', 0);
+  $status = variable_get('sequenced_newsletter_enable', 0);
+  $start = strtotime(variable_get('sequenced_newsletter_start_time', '01-01-1970 - 00:01'));
+  
+  print variable_get('sequenced_newsletter_start_time', '01-01-1970 - 00:01')."\n";
+  print variable_get('sequenced_newsletter_last_run', 0)."\n";
+  print variable_get('sequenced_newsletter_enable', 0)."\n";
+    
+  // Delete old variables
   variable_del('sequenced_newsletter_master');
-  variable_del('sequenced_newsletter_period');
   variable_del('sequenced_newsletter_last_run');
+  variable_del('sequenced_newsletter_period');
+  variable_del('sequenced_newsletter_enable');
+  variable_del('sequenced_newsletter_start_time');
+  
+  // Import old newsletter
+  db_query("INSERT INTO {sequenced_newsletter_conf}(tid,name,start_date,last_send,send_interval,sort,status) VALUES('%d','%s','%d','%d','%d','%d','%d')",
+    $tid,
+    $name,
+    $start,
+    $last_send,
+    $interval,
+    $status
+  );
+  db_query("UPDATE {sequenced_newsletter} SET sqnid=1");
+  
 }

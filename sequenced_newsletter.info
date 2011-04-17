@@ -1,3 +1,4 @@
+; $Id$
 name = Sequenced newsletter
 description = Makes possible to send scheduled sequenced email newsletters.
 dependencies[] = simplenews

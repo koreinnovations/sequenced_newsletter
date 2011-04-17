@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /**
  * Implementation of hook_help().
@@ -11,83 +12,16 @@ function sequenced_newsletter_help($path, $arg) {
       $output .= '<p>' . t('Example of a sequenced newsletter is a series of emals, sent to the registred user N days after registration. All N emails are predefined, and every user must get the same email on the first day, second day, ... If some user registered yesterday and another today, they will both get their emails at the same time. The difference is only in content they will get; first user will get email for second day, and second user will get the email for first day.') . '</p>';
       $output .= '<p>' . t('Module is configured on it\'s <a href="@settings">settings page</a>. Emails are sent through cron job; every time when cron runs module checks if it is already time to send emails. Emails are put in Simplenews spool, when necessary. Emails are then sent through Simplenews. Module also generates a, <a href="@list">list of all emails</a> sent to Simplenews spool.', array('@settings' => url('admin/settings/sequenced_newsletter'), '@list' => url('sequenced_newsletter/list'))) . '</p>';
       $output .= '<p>' . t('Order of emails is set regarding to creation date. Nodes (emails) created earlier will be sent before (a king of FIFO priciple).') . '</p>';
-      break;
+            break;
   }
   return $output;
-} // function onthisdate_help
+}
 
 /**
  * Implementation of hook_perm().
  */
 function sequenced_newsletter_perm() {
-  return array('view sent letters list');
-}
-
-/**
- * Implementation of hook_admin().
- */
-function sequenced_newsletter_admin() {
-  //get simplenews terms
-  $vid = variable_get('simplenews_vid', -1);
-  $terms = db_query("SELECT * FROM {term_data} WHERE vid=%d", $vid);
-  $terms_array = array();
-  while ($row = db_fetch_array($terms)) {
-    $terms_array[$row['tid']] = t($row['name']);
-  }
-
-  //get spool time
-  $spool_time = variable_get('sequenced_newsletter_start_time', date('m-d-Y - H:i'));
-
-  //sequence types
-  $types = array(
-      0 => t('Daily'),
-      1 => t('Weekly'),
-      2 => t('Monthly'),
-    );
-
-  $form = array();
-  //enable sequence sending
-  $form['sequenced_newsletter_enable'] = array(
-    '#type' => 'radios',
-    '#title' => t('Enable sequenced newsletters'),
-    '#default_value' => variable_get('sequenced_newsletter_enable', 0),
-    '#description' => t("When enabled sequenced newsletters will be sent. When disabled nothing will happen."),
-    '#options' => array(t('Disabled'), t('Enabled')),
-  );
-
-  //set master
-  $form['sequenced_newsletter_master'] = array(
-    '#type' => 'select',
-    '#title' => t('Newsletter'),
-    '#default_value' => variable_get('sequenced_newsletter_master', NULL),
-    '#options' => $terms_array,
-    '#description' => t("Sequenced newsletter. Subscribers will get sequenced emails from this newsletter term."),
-    '#required' => TRUE,
-  );
-
-  //set master
-  $form['sequenced_newsletter_period'] = array(
-    '#type' => 'select',
-    '#title' => t('Sending period'),
-    '#default_value' => variable_get('sequenced_newsletter_period', 0),
-    '#options' => $types,
-    '#description' => t("Period to send sequenced newspetters."),
-    '#required' => TRUE,
-  );
-
-  //sending time
-  $form['sequenced_newsletter_start_time'] = array(
-    '#type' => 'date_select',
-    '#title' => t('Sequence start'),
-    '#date_type'       => DATE_DATETIME,
-    '#default_value'   => $spool_time,
-    '#date_format'     => 'm-d-Y - H:i',
-    '#date_timezone'   => date_default_timezone_name(),
-    '#description' => t('Time of the day when emails will be moved into spool/sending will start.'),
-    '#required' => TRUE
-  );
-
-  return system_settings_form($form);
+  return array('administer sequenced newsletters');
 }
 
 function _sequenced_newsletter_list_letters() {
@@ -116,18 +50,51 @@ function sequenced_newsletter_menu() {
   $items = array();
 
   $items['admin/settings/sequenced_newsletter'] = array(
-    'title' => 'Sequenced newsletter',
-    'description' => 'Configuration page for Sequenced newsletter module.',
+    'title' => t('Sequenced newsletter'),
+    'description' => t('Configuration page for Sequenced newsletter module.'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sequenced_newsletter_admin'),
-    'access arguments' => array('access administration pages'),
+    'access arguments' => array('administer sequenced newsletters'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'sequenced_newsletter.admin.inc',
   );
-
-  $items['sequenced_newsletter/list'] = array(
-    'title' => 'List of sent letters',
-    'description' => "Sequenced module's list of sent emails (for debugging purpuses).",
+  
+  $items['admin/settings/sequenced_newsletter/add'] = array(
+    'title' => t('Sequenced newsletter'),
+    'description' => t('Add new sequenced newsletter.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sequenced_newsletter_admin_edit'),
+    'access arguments' => array('administer sequenced newsletters'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'sequenced_newsletter.admin.inc',
+  );
+  
+  $items['admin/settings/sequenced_newsletter/edit/%'] = array(
+    'title' => t('Edit sequenced newsletter'),
+    'description' => t('Edit given sequenced newsletter.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sequenced_newsletter_admin_edit', 4),
+    'access arguments' => array('administer sequenced newsletters'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'sequenced_newsletter.admin.inc',
+  );
+  
+  $items['admin/settings/sequenced_newsletter/delete/%'] = array(
+    'title' => t('Delete sequenced newsletter'),
+    'description' => t('Delete given sequenced newsletter.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sequenced_newsletter_admin_delete', 4),
+    'access arguments' => array('administer sequenced newsletters'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'sequenced_newsletter.admin.inc',
+  );
+  
+  $items['admin/settings/sequenced_newsletter/list'] = array(
+    'title' => t('List of sent letters'),
+    'description' => t('Sequenced module\'s list of sent emails (for debugging purpuses).'),
     'page callback' => '_sequenced_newsletter_list_letters',
-    'access arguments' => array('view sent letters list'),
+    'access arguments' => array('administer sequenced newsletters'),
+    'type' => MENU_NORMAL_ITEM,
   );
 
   return $items;
@@ -136,65 +103,80 @@ function sequenced_newsletter_menu() {
 /**
  * Implementation of hook_cron().
  */
-function sequenced_newsletter_cron() {
+function sequenced_newsletter_cron() {  
   //check if it is time to spool mails
-  $last_run = variable_get('sequenced_newsletter_last_run', 0);
-  $int_type = variable_get('sequenced_newsletter_period', 0);
-  $tid = variable_get('sequenced_newsletter_master', 0);
-  $enabled = variable_get('sequenced_newsletter_enable', 0);
-  $start_time = strtotime(variable_get('sequenced_newsletter_start_time', '01-01-1970 - 00:01'));
   $intervals[0] = 86400; //intervals
   $intervals[1] = 7 * $intervals[0]; //weekly
   $intervals[2] = $intervals[0]*date_days_in_month(date('Y'), date('m')); //monthly
+  $intervals[3] = 300; //intervals
+  $intervals[4] = 60; //intervals
 
-  //check what to do
-  $interval = $intervals[$int_type];
-  if (time() - $last_run > $interval && $start_time < time() && $tid && $enabled) {
-    //correct time of this run to be ok
-    $time_of_run = $last_run == 0 ? $start_time : $last_run+$interval;
+  $seq_letters = db_query("SELECT * FROM {sequenced_newsletter_conf} WHERE status=1");
 
-    //get letters
-    $lett_array = array();
-    $spool_wait = array();
-    $letters = db_query("SELECT nid FROM {simplenews_newsletters} WHERE tid=%d ORDER BY nid ASC", $tid);
-    while ($row = db_fetch_array($letters)) {
-      $lett_array[] = $row['nid'];
-      $spool_wait[$row['nid']] = array();
-    }
+  while ($item = db_fetch_object($seq_letters)) {
+    //load vars
+    $last_run = $item->last_send;
+    $int_type = $item->send_interval;
+    $tid = $item->tid;
+    //$enabled = $item->status;
+    $start_time = $item->start_date;
+    $letter_order = $item->sort == 0 ? 'n.nid' : 'n.changed';
+    
+    //check what to do
+    $interval = $intervals[$int_type];
+  
+    if (time() - $last_run > $interval && $start_time < time() && $tid /*&& $enabled*/) {
 
-    //get subscribers
-    $subs_array = array();
-    $subs = db_query("SELECT s.snid,s.mail FROM {simplenews_snid_tid} AS l,{simplenews_subscriptions} AS s WHERE l.snid=s.snid AND l.tid=%d", $tid);
-    while ($row = db_fetch_array($subs)) {
-      $subs_array[] = Array(
-        'snid' => $row['snid'],
-        'mail' => $row['mail']
-      );
-    }
-
-    //spool emails
-
-    foreach ($subs_array as $sub) {
-      //get last newsletter
-      $max = db_query_range("SELECT nid FROM {sequenced_newsletter} WHERE sid=%d ORDER BY date_spooled DESC", $sub['snid'], 0, 1);
-      $max = db_fetch_array($max);
-      $next_nid = $max['nid'] == NULL ? reset($lett_array) : $lett_array[array_search($max['nid'], $lett_array)+1];
-
-      //remember to send and log
-      if ($next_nid) {
-        $spool_wait[$next_nid][] = (object) $sub;
-        db_query("INSERT INTO {sequenced_newsletter}(sid,nid,date_spooled) VALUES('%d','%d','%d')", $sub['snid'], $next_nid, $time_of_run);
+      //correct time of this run to be ok
+      $time_of_run = $last_run == 0 ? time() : $last_run + $interval;
+  
+      //check if we missed one or more full intervals
+      while ($time_of_run + $interval <  time()) {
+        $time_of_run += $interval;
       }
-    }
-
-    //send emails
-    foreach ($spool_wait as $nid => $spool) {
-      if (count($spool) > 0) {
-        simplenews_send_node($nid, $spool);
+  
+      //get letters
+      $lett_array = Array();
+      $spool_wait = Array();
+      $letters = db_query("SELECT sn.nid FROM {simplenews_newsletters} AS sn INNER JOIN {node} AS n ON n.nid=sn.nid WHERE sn.tid=%d ORDER BY " . $letter_order . " ASC", $tid);
+      while ($row = db_fetch_array($letters)) {
+        $lett_array[] = $row['nid'];
+        $spool_wait[$row['nid']] = Array();
       }
+  
+      //get subscribers
+      $subs_array = Array();
+      $subs = db_query("SELECT s.snid,s.mail FROM {simplenews_snid_tid} AS l,{simplenews_subscriptions} AS s WHERE l.snid=s.snid AND l.tid=%d AND s.activated=1 AND l.status=1", $tid);
+      while ($row = db_fetch_array($subs)) {
+        $subs_array[] = Array(
+          'snid' => $row['snid'],
+          'mail' => $row['mail']
+        );
+      }
+  
+      //spool emails
+      foreach ($subs_array as $sub) {
+        //get last newsletter
+        $max = db_query_range("SELECT nid FROM {sequenced_newsletter} WHERE sid=%d AND sqnid=%d ORDER BY date_spooled DESC", $sub['snid'], $item->sqnid, 0, 1);
+        $max = db_fetch_array($max);
+        $next_nid = $max['nid'] == NULL ? reset($lett_array) : $lett_array[array_search($max['nid'], $lett_array)+1];
+  
+        //remember to send and log
+        if ($next_nid) {
+          $spool_wait[$next_nid][] = (object) $sub;
+          db_query("INSERT INTO {sequenced_newsletter}(sid,sqnid,nid,date_spooled) VALUES('%d','%d','%d','%d')", $sub['snid'], $item->sqnid, $next_nid, $time_of_run);
+        }
+      }
+  
+      //send emails
+      foreach ($spool_wait as $nid => $spool) {
+        if (count($spool) > 0) {
+          simplenews_send_node($nid, $spool);
+        }
+      }
+  
+      //save this run timestamp
+      db_query("UPDATE {sequenced_newsletter_conf} SET last_send=%d WHERE sqnid=%d", $time_of_run, $item->sqnid);
     }
-
-    //save this run timestamp
-    variable_set('sequenced_newsletter_last_run', $time_of_run);
   }
 }

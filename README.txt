@@ -28,4 +28,4 @@ Module requires Simplenews and Date modules to be enabled.
 -- CONTACT --
 
 Current maintainer and initial module author:
-* Janez Urevc (salshrsm) - http://drupal.org/user/744628
+* Janez Urevc (slashrsm) - http://drupal.org/user/744628
