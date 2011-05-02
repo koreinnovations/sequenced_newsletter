@@ -169,6 +169,7 @@ function sequenced_newsletter_cron() {
       }
   
       //send emails
+      module_load_include('inc', 'simplenews', 'includes/simplenews.mail');
       foreach ($spool_wait as $nid => $spool) {
         if (count($spool) > 0) {
           simplenews_send_node($nid, $spool);
