@@ -1,5 +1,6 @@
 
 Sequenced newsletter 6.x-1.x
 ----------------------------
-Issue #1064592 by slashrsm: support for multiple sequenced newsletters and a bit of rewrite.
-by slashrsm: Initial commit into drupal.org CVS.
+- #1348858 by Ben Coleman: PostgreSQL incompatibility: use ORDER BY <field>, <field> not ORDER BY <field> AND <field>
+- #1064592 by slashrsm: support for multiple sequenced newsletters and a bit of rewrite.
+- by slashrsm: Initial commit into drupal.org CVS.

@@ -26,7 +26,7 @@ function sequenced_newsletter_perm() {
 
 function _sequenced_newsletter_list_letters() {
   $out = "";
-  $addresses = db_query("SELECT sid, title, date_spooled, mail FROM {sequenced_newsletter} as s, {node} as n, {simplenews_subscriptions} AS su WHERE s.nid=n.nid and s.sid=su.snid ORDER BY mail AND date_spooled DESC");
+  $addresses = db_query("SELECT sid, title, date_spooled, mail FROM {sequenced_newsletter} as s, {node} as n, {simplenews_subscriptions} AS su WHERE s.nid=n.nid and s.sid=su.snid ORDER BY mail, date_spooled DESC");
   $old_mail = "";
   while ($row = db_fetch_array($addresses)) {
     if ($old_mail != $row['mail']) {
