@@ -142,45 +142,58 @@ function sequenced_newsletter_cron() {
       //get letters
       $lett_array = array();
       $spool_wait = array();
-      // TODO Please convert this statement to the D7 database API syntax.
-      
-      $query = db_select('simplenews_newsletters', 'sn');
+
+      $query = db_select('simplenews_newsletter', 'sn');
       $query->join('node', 'n', 'n.nid = sn.nid');
       $query->condition('sn.tid', $tid)
-              ->order($letter_order, 'ASC')
+              ->orderBy($letter_order, 'ASC')
               ->fields('sn.nid');
       $result = $query->execute();
-      
-      
-      $letters = db_query("SELECT sn.nid FROM {simplenews_newsletters} AS sn INNER JOIN {node} AS n ON n.nid=sn.nid WHERE sn.tid=%d ORDER BY " . $letter_order . " ASC", $tid);
-      while ($row = db_fetch_array($letters)) {
-        $lett_array[] = $row['nid'];
-        $spool_wait[$row['nid']] = array();
+
+      foreach ($result as $row) {
+        $lett_array[] = $row->nid;
+        $spool_wait[$row->nid] = array();
       }
 
       //get subscribers
       $subs_array = array();
-      $subs = db_query("SELECT s.snid,s.mail FROM {simplenews_snid_tid} AS l,{simplenews_subscriptions} AS s WHERE l.snid = :l.snid AND l.tid = :l.tid AND s.activated = :s.activated AND l.status = :l.status", array(':l.snid' => s . snid, ':l.tid' => $tid, ':s.activated' => 1, ':l.status' => 1));
-      while ($row = db_fetch_array($subs)) {
+
+      $query = db_select('simplenews_snid_tid', 'l');
+      $query->join('simplenews_subscriptions', 's', 'l.snid = s.snid AND l.tid = ' . $tid);
+      $query->condition('l.tid', $tid)
+              ->condition('s.activated', TRUE)
+              ->condition('l.status', TRUE)
+              ->fields('s', array('snid', 'mail'));
+      $result = $query->execute();
+
+      foreach ($subs as $row) {
         $subs_array[] = array(
-            'snid' => $row['snid'],
-            'mail' => $row['mail'],
+            'snid' => $row->snid,
+            'mail' => $row->mail,
         );
       }
 
       //spool emails
       foreach ($subs_array as $sub) {
         //get last newsletter
-        $max = db_query_range("SELECT nid FROM {sequenced_newsletter} WHERE sid = :sid AND sqnid = :sqnid ORDER BY date_spooled DESC", array(':sid' => $sub['snid'], ':sqnid' => $item->sqnid));
-        $max = db_fetch_array($max);
-        $next_nid = $max['nid'] == NULL ? reset($lett_array) : $lett_array[array_search($max['nid'], $lett_array) + 1];
+
+        $result = db_query("SELECT MAX(nid) FROM {sequenced_newsletter} WHERE sid = :sid AND sqnid = :sqnid ORDER BY date_spooled DESC", array(':sid' => $sub['snid'], ':sqnid' => $item->sqnid));
+        $max = $result->fetchField();
+        $next_nid = $max == NULL ? reset($lett_array) : $lett_array[array_search($max, $lett_array) + 1];
 
         //remember to send and log
         if ($next_nid) {
           $spool_wait[$next_nid][] = (object) $sub;
-          // TODO Please convert this statement to the D7 database API syntax.
-          /* db_query("INSERT INTO {sequenced_newsletter}(sid,sqnid,nid,date_spooled) VALUES('%d','%d','%d','%d')", $sub['snid'], $item->sqnid, $next_nid, $time_of_run) */
-          NULL;
+          db_query("
+            INSERT INTO {sequenced_newsletter}
+              (sid,sqnid,nid,date_spooled) 
+            VALUES
+              (:sid, :sqnid, :nid, :date_spooled)", array(
+              ':sid' => $sub['snid'],
+              ':sqnid' => $item->sqnid,
+              ':nid' => $next_nid,
+              ':date_spooled' => $time_of_run
+          ));
         }
       }
 
@@ -193,8 +206,6 @@ function sequenced_newsletter_cron() {
       }
 
       //save this run timestamp
-      // TODO Please review the conversion of this statement to the D7 database API syntax.
-      /* db_query("UPDATE {sequenced_newsletter_conf} SET last_send=%d WHERE sqnid=%d", $time_of_run, $item->sqnid) */
       db_update('sequenced_newsletter_conf')
               ->fields(array(
                   'last_send' => $time_of_run,

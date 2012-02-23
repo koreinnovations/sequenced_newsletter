@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * Description of sequenced_newsletter
+ */
+class SequencedNewsletterTestCase extends DrupalWebTestCase {
+
+  protected $basic_user;
+
+  public static function getInfo() {
+    return array(
+        'name' => 'Sequenced Newsletter functionality',
+        'description' => 'Validate the behavior and stability of the sequenced newsletter module',
+        'group' => 'Other',
+    );
+  }
+
+  public function setUp() {
+    parent::setUp();
+
+    $this->basic_user = $this->drupalCreateUser();
+  }
+
+  
+}
+
+?>

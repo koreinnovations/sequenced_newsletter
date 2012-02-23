@@ -1,7 +1,5 @@
 <?php
 
-// Id
-
 /**
  * @file
  * Administration pages for sequenced newsletter.
@@ -13,21 +11,20 @@
 function sequenced_newsletter_admin($form, &$form_state) {
   $form = array();
   $form['add_link'] = array(
-    '#value' => theme_item_list(array(
-      l('Create sequenced newsletter', 'admin/config/sequenced_newsletter/add'),
-      l('View list of sent sequenced newsletters', 'admin/config/sequenced_newsletter/list'),
-    )),
+      '#value' => theme_item_list(array(
+          l('Create sequenced newsletter', 'admin/config/sequenced_newsletter/add'),
+          l('View list of sent sequenced newsletters', 'admin/config/sequenced_newsletter/list'),
+      )),
   );
 
   $form['table'] = array(
-    '#value' => theme_table(
+      '#value' => theme_table(
               array(
-      t('Sequenced newsletter name'),
-      t('Actions'),
-    ), _sequenced_newsletter_get_active_items()
+          t('Sequenced newsletter name'),
+          t('Actions'),
+              ), _sequenced_newsletter_get_active_items()
       ),
   );
-
 
   return $form;
 }
@@ -49,82 +46,82 @@ function sequenced_newsletter_admin_edit($form, &$form_state, $id = -1) {
 
   // Build form.
   $form['name'] = array(
-    '#type' => 'textfield',
-    '#title' => t("Sequenced's newsletter name"),
-    '#default_value' => isset($old_data['name']) ? check_plain($old_data['name']) : '',
-    '#description' => t("Enter human name for this newsletter. Name's length is limited to 128 characters."),
-    '#required' => TRUE,
+      '#type' => 'textfield',
+      '#title' => t("Sequenced's newsletter name"),
+      '#default_value' => isset($old_data['name']) ? check_plain($old_data['name']) : '',
+      '#description' => t("Enter human name for this newsletter. Name's length is limited to 128 characters."),
+      '#required' => TRUE,
   );
 
   $form['enabled'] = array(
-    '#type' => 'radios',
-    '#title' => t('Enable this sequenced newsletter'),
-    '#default_value' => isset($old_data['enabled']) ? check_plain($old_data['enabled']) : 0,
-    '#description' => t("When enabled sequenced newsletters will be sent. When diabled nothing will happen."),
-    '#options' => array(t('Disabled'), t('Enabled')),
+      '#type' => 'radios',
+      '#title' => t('Enable this sequenced newsletter'),
+      '#default_value' => isset($old_data['enabled']) ? check_plain($old_data['enabled']) : 0,
+      '#description' => t("When enabled sequenced newsletters will be sent. When diabled nothing will happen."),
+      '#options' => array(t('Disabled'), t('Enabled')),
   );
 
   $form['tid'] = array(
-    '#type' => 'select',
-    '#title' => t('Newsletter'),
-    '#default_value' => isset($old_data['tid']) ? $old_data['tid'] : 0,
-    '#options' => _sequenced_newsletter_get_tids(),
-    '#description' => t("Sequenced newsletter. Subscribers will get sequenced emails from this newsletter term."),
-    '#required' => TRUE,
+      '#type' => 'select',
+      '#title' => t('Newsletter'),
+      '#default_value' => isset($old_data['tid']) ? $old_data['tid'] : 0,
+      '#options' => _sequenced_newsletter_get_tids(),
+      '#description' => t("Sequenced newsletter. Subscribers will get sequenced emails from this newsletter term."),
+      '#required' => TRUE,
   );
 
   $form['start_time'] = array(
-    '#type' => 'date_select',
-    '#title' => t('Sequence start'),
-    '#date_type' => DATE_DATETIME,
-    '#default_value' => isset($old_data['start_time']) ? date('Y-m-d H:i', $old_data['start_time']) : date('Y-m-d H:i'),
-    '#date_format' => 'm-d-Y - H:i',
-    '#date_timezone' => date_default_timezone_name(),
-    '#description' => t('Time and day when emails will be moved into spool/sending will start.'),
-    '#required' => TRUE,
+      '#type' => 'date_select',
+      '#title' => t('Sequence start'),
+      '#date_type' => DATE_DATETIME,
+      '#default_value' => isset($old_data['start_time']) ? date('Y-m-d H:i', $old_data['start_time']) : date('Y-m-d H:i'),
+      '#date_format' => 'm-d-Y - H:i',
+      '#date_timezone' => date_default_timezone_name(),
+      '#description' => t('Time and day when emails will be moved into spool/sending will start.'),
+      '#required' => TRUE,
   );
 
   if ($id != -1) {
     $form['reset'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Reset time'),
-      '#default_value' => 0,
-      '#description' => t("Check if you want to reset timing of this newsletter. If you changed Sequence start time, than this is probbably a good idea.<br />WARNING: Mail will be sent immediatley if timer is reseted and send time is set to past."),
+        '#type' => 'checkbox',
+        '#title' => t('Reset time'),
+        '#default_value' => 0,
+        '#description' => t("Check if you want to reset timing of this newsletter. If you changed Sequence start time, than this is probbably a good idea.<br />WARNING: Mail will be sent immediatley if timer is reseted and send time is set to past."),
     );
   }
 
   $form['interval'] = array(
-    '#type' => 'select',
-    '#title' => t('Sending interval'),
-    '#default_value' => isset($old_data['interval']) ? $old_data['interval'] : 0,
-    '#options' => _sequenced_newsletter_get_intervals(),
-    '#description' => t("Interval to send sequenced newspetters."),
-    '#required' => TRUE,
+      '#type' => 'select',
+      '#title' => t('Sending interval'),
+      '#default_value' => isset($old_data['interval']) ? $old_data['interval'] : 0,
+      '#options' => _sequenced_newsletter_get_intervals(),
+      '#description' => t("Interval to send sequenced newspetters."),
+      '#required' => TRUE,
   );
 
   $form['sort'] = array(
-    '#type' => 'select',
-    '#title' => t('Sorting field'),
-    '#default_value' => isset($old_data['sort']) ? $old_data['sort'] : 0,
-    '#options' => _sequenced_newsletter_get_sort(),
-    '#description' => t("Which field to use for ordering newsletter issues."),
-    '#required' => TRUE,
+      '#type' => 'select',
+      '#title' => t('Sorting field'),
+      '#default_value' => isset($old_data['sort']) ? $old_data['sort'] : 0,
+      '#options' => _sequenced_newsletter_get_sort(),
+      '#description' => t("Which field to use for ordering newsletter issues."),
+      '#required' => TRUE,
   );
 
   $form['sqnid'] = array(
-    '#type' => 'hidden',
-    '#value' => $id,
+      '#type' => 'hidden',
+      '#value' => $id,
   );
 
   $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
+      '#type' => 'submit',
+      '#value' => t('Save'),
   );
 
   $form['cancel'] = array(
-    '#type' => 'button',
-    '#value' => t('Cancel'),
-    '#name' => 'cancel',
+      '#type' => 'button',
+      '#value' => t('Cancel'),
+      '#name' => 'cancel',
   );
 
   return $form;
@@ -141,12 +138,12 @@ function sequenced_newsletter_admin_edit_submit(&$form, &$form_state) {
 
   // Prepare data for DB.
   $insert = array(
-    'name' => $form_state['values']['name'],
-    'tid' => $form_state['values']['tid'],
-    'start_date' => $date,
-    'send_interval' => $form_state['values']['interval'],
-    'status' => $form_state['values']['enabled'],
-    'sort' => $form_state['values']['sort'],
+      'name' => $form_state['values']['name'],
+      'tid' => $form_state['values']['tid'],
+      'start_date' => $date,
+      'send_interval' => $form_state['values']['interval'],
+      'status' => $form_state['values']['enabled'],
+      'sort' => $form_state['values']['sort'],
   );
 
   // Write to DB.
@@ -188,8 +185,8 @@ function sequenced_newsletter_admin_delete($form, &$form_state, $id) {
   $result = db_fetch_array($result);
 
   $form['sqnid'] = array(
-    '#type' => 'value',
-    '#value' => $id,
+      '#type' => 'value',
+      '#value' => $id,
   );
 
   return confirm_form($form, t('Are you sure you want to delete %title?', array('%title' => $result['name'])), isset($_GET['destination']) ? $_GET['destination'] : 'admin/config/sequenced_newsletter', t('This action cannot be undone.'), t('Delete'), t('Cancel')
@@ -202,14 +199,12 @@ function sequenced_newsletter_admin_delete($form, &$form_state, $id) {
  */
 function sequenced_newsletter_admin_delete_submit(&$form, &$form_state) {
   if ($form_state['values']['confirm']) {
-    // TODO Please review the conversion of this statement to the D7 database API syntax.
-    /* db_query("UPDATE {sequenced_newsletter_conf} SET status=2 WHERE sqnid=%d", $form_state['values']['sqnid']) */
     db_update('sequenced_newsletter_conf')
-  ->fields(array(
-      'status' => 2,
-    ))
-  ->condition('sqnid', $form_state['values']['sqnid'])
-  ->execute();
+            ->fields(array(
+                'status' => 2,
+            ))
+            ->condition('sqnid', $form_state['values']['sqnid'])
+            ->execute();
   }
 
   $form_state['redirect'] = 'admin/config/sequenced_newsletter';
@@ -239,11 +234,11 @@ function _sequenced_newsletter_get_tids() {
  */
 function _sequenced_newsletter_get_intervals() {
   return array(
-    0 => t('Daily'),
-    1 => t('Weekly'),
-    2 => t('Monthly'),
-    3 => t('5 minutes'),
-    4 => t('1 minute'),
+      0 => t('Daily'),
+      1 => t('Weekly'),
+      2 => t('Monthly'),
+      3 => t('5 minutes'),
+      4 => t('1 minute'),
   );
 }
 
@@ -254,8 +249,8 @@ function _sequenced_newsletter_get_intervals() {
  */
 function _sequenced_newsletter_get_sort() {
   return array(
-    0 => t('nid'),
-    1 => t('updated time'),
+      0 => t('nid'),
+      1 => t('updated time'),
   );
 }
 
@@ -271,13 +266,13 @@ function _sequenced_newsletter_get_item($id) {
   if ($result) {
     $item = db_fetch_object($result);
     return array(
-      'name' => $item->name,
-      'enabled' => $item->status,
-      'tid' => $item->tid,
-      'start_time' => $item->start_date,
-      'interval' => $item->send_interval,
-      'sqnid' => $item->sqnid,
-      'sort' => $item->sort,
+        'name' => $item->name,
+        'enabled' => $item->status,
+        'tid' => $item->tid,
+        'start_time' => $item->start_date,
+        'interval' => $item->send_interval,
+        'sqnid' => $item->sqnid,
+        'sort' => $item->sort,
     );
   }
   else {
@@ -299,8 +294,8 @@ function _sequenced_newsletter_get_active_items() {
     $delete = l(t('Delete'), 'admin/config/sequenced_newsletter/delete/' . $item['sqnid']);
 
     $data[] = array(
-      check_plain($item['name']),
-      $edit . ' ' . $delete,
+        check_plain($item['name']),
+        $edit . ' ' . $delete,
     );
   }
 
